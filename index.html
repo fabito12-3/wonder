@@ -1,101 +1,88 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login con Wonder / Arweave Mejorado</title>
+  <meta charset="UTF-8" />
+  <title>Arweave Wallet Login</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #222;
-      color: #eee;
+      margin: 0;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
+      align-items: center;
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
     }
     button {
       padding: 12px 24px;
-      background-color: #ff6600;
-      border: none;
-      border-radius: 5px;
+      background: #ff6600;
       color: #fff;
-      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
       cursor: pointer;
     }
-    #status {
-      margin-top: 20px;
+    #status, #address {
+      margin-top: 16px;
+      max-width: 90%;
+      text-align: center;
+      word-break: break-word;
       font-size: 14px;
-      color: #f88;
-      max-width: 80%;
-      text-align: center;
-      word-break: break-word;
     }
-    #address {
-      margin-top: 20px;
-      font-size: 16px;
-      color: #8f8;
-      max-width: 80%;
-      text-align: center;
-      word-break: break-word;
-    }
+    #status { color: #f66; }
+    #address { color: #6f6; }
   </style>
 </head>
 <body>
-  <h1>Login con Wonder / Arweave</h1>
-  <button id="loginBtn">Conectar Wallet</button>
+  <h2>Login with Arweave Wallet</h2>
+  <button id="connect">Connect Wallet</button>
   <div id="status"></div>
   <div id="address"></div>
 
   <script>
-    const statusEl = document.getElementById('status');
-    const addressEl = document.getElementById('address');
-    const loginBtn = document.getElementById('loginBtn');
+    const status = document.getElementById('status');
+    const address = document.getElementById('address');
+    const connectBtn = document.getElementById('connect');
 
-    function setStatus(msg, isError = false) {
-      statusEl.textContent = msg;
-      statusEl.style.color = isError ? '#f88' : '#8f8';
-    }
+    const updateStatus = (msg, error = false) => {
+      status.textContent = msg;
+      status.style.color = error ? '#f66' : '#6f6';
+    };
 
-    async function connectWallet() {
-      setStatus('Intentando conectar la wallet…');
-      addressEl.textContent = '';
+    const connectWallet = async () => {
+      updateStatus('Connecting wallet...');
+      address.textContent = '';
 
-      // Verificar si la wallet está inyectada
-      if (typeof window.arweaveWallet === 'undefined') {
-        setStatus('Error: No se encontró "arweaveWallet". Asegúrate de tener instalada una wallet compatible (Wonder, ArConnect, etc.)', true);
+      if (!window.arweaveWallet) {
+        updateStatus('Arweave wallet not detected.', true);
+        return;
+      }
+
+      if (!window.arweaveWallet.connect) {
+        updateStatus('Wallet connection method not supported.', true);
         return;
       }
 
       try {
-        // Verificar si la wallet soporta connect
-        if (!window.arweaveWallet.connect) {
-          setStatus('Error: la wallet no tiene método "connect". Comprueba la versión o compatibilidad.', true);
-          return;
-        }
-
-        // Solicitar permisos
         await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'SIGN_TRANSACTION']);
-        setStatus('Wallet conectada. Obteniendo dirección…');
-
-        // Obtener dirección activa
-        const address = await window.arweaveWallet.getActiveAddress();
-        if (!address) {
-          setStatus('Error: No se pudo obtener la dirección activa desde la wallet.', true);
+        const addr = await window.arweaveWallet.getActiveAddress();
+        if (!addr) {
+          updateStatus('Failed to retrieve wallet address.', true);
           return;
         }
 
-        addressEl.textContent = 'Dirección conectada: ' + address;
-        setStatus('Conectado exitosamente!', false);
-
+        address.textContent = 'Connected address: ' + addr;
+        updateStatus('Wallet connected.');
       } catch (err) {
-        console.error('Error en connectWallet:', err);
-        setStatus('Error al conectar la wallet: ' + (err.message || err.toString()), true);
+        updateStatus('Connection failed: ' + (err?.message || err), true);
+        console.error(err);
       }
-    }
+    };
 
-    loginBtn.addEventListener('click', connectWallet);
+    connectBtn.addEventListener('click', connectWallet);
   </script>
 </body>
 </html>
+
