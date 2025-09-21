@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login con Wonder / Arweave Mejorado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #222;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    button {
+      padding: 12px 24px;
+      background-color: #ff6600;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #f88;
+      max-width: 80%;
+      text-align: center;
+      word-break: break-word;
+    }
+    #address {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #8f8;
+      max-width: 80%;
+      text-align: center;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>Login con Wonder / Arweave</h1>
+  <button id="loginBtn">Conectar Wallet</button>
+  <div id="status"></div>
+  <div id="address"></div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const addressEl = document.getElementById('address');
+    const loginBtn = document.getElementById('loginBtn');
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? '#f88' : '#8f8';
+    }
+
+    async function connectWallet() {
+      setStatus('Intentando conectar la wallet…');
+      addressEl.textContent = '';
+
+      // Verificar si la wallet está inyectada
+      if (typeof window.arweaveWallet === 'undefined') {
+        setStatus('Error: No se encontró "arweaveWallet". Asegúrate de tener instalada una wallet compatible (Wonder, ArConnect, etc.)', true);
+        return;
+      }
+
+      try {
+        // Verificar si la wallet soporta connect
+        if (!window.arweaveWallet.connect) {
+          setStatus('Error: la wallet no tiene método "connect". Comprueba la versión o compatibilidad.', true);
+          return;
+        }
+
+        // Solicitar permisos
+        await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'SIGN_TRANSACTION']);
+        setStatus('Wallet conectada. Obteniendo dirección…');
+
+        // Obtener dirección activa
+        const address = await window.arweaveWallet.getActiveAddress();
+        if (!address) {
+          setStatus('Error: No se pudo obtener la dirección activa desde la wallet.', true);
+          return;
+        }
+
+        addressEl.textContent = 'Dirección conectada: ' + address;
+        setStatus('Conectado exitosamente!', false);
+
+      } catch (err) {
+        console.error('Error en connectWallet:', err);
+        setStatus('Error al conectar la wallet: ' + (err.message || err.toString()), true);
+      }
+    }
+
+    loginBtn.addEventListener('click', connectWallet);
+  </script>
+</body>
+</html>
