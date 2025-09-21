@@ -37,14 +37,16 @@
 </head>
 <body>
   <h2>Login with Arweave Wallet</h2>
-  <button id="connect">Connect Wallet</button>
+  <button id="walletBtn">Connect Wallet</button>
   <div id="status"></div>
   <div id="address"></div>
 
   <script>
     const status = document.getElementById('status');
     const address = document.getElementById('address');
-    const connectBtn = document.getElementById('connect');
+    const walletBtn = document.getElementById('walletBtn');
+
+    let connected = false;
 
     const updateStatus = (msg, error = false) => {
       status.textContent = msg;
@@ -73,16 +75,30 @@
           return;
         }
 
+        connected = true;
         address.textContent = 'Connected address: ' + addr;
         updateStatus('Wallet connected.');
+        walletBtn.textContent = 'Disconnect Wallet';
       } catch (err) {
         updateStatus('Connection failed: ' + (err?.message || err), true);
         console.error(err);
       }
     };
 
-    connectBtn.addEventListener('click', connectWallet);
+    const disconnectWallet = async () => {
+      try {
+        await window.arweaveWallet.disconnect();
+      } catch (_) {}
+      connected = false;
+      address.textContent = '';
+      updateStatus('Wallet disconnected.');
+      walletBtn.textContent = 'Connect Wallet';
+    };
+
+    walletBtn.addEventListener('click', () => {
+      if (connected) disconnectWallet();
+      else connectWallet();
+    });
   </script>
 </body>
 </html>
-
